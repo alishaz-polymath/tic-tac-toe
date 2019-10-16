@@ -24,7 +24,7 @@ import pickle
 
 __author__ = "Syed Ali Shahbaz"
 __copyright__ = "Copyright 2019, TicTacToe with AI"
-
+__credits__ = ["Abhijit Anil"]
 __license__ = "MIT"
 __version__ = "1.0.1"
 __maintainer__ = "Syed Ali Shahbaz"
@@ -91,14 +91,14 @@ class tictactoe_game():
 			#self.draw_board()																#Uncomment this line if you wish to visualize the text-based play on the console
 			self.play_move()																#play a move using current player
 			if self.isWinner is None:
-				reward = self.getReward()													#get reward for self.prevState and self.prevMove
-				self.updateQTable(reward)													#update qtable for self.prevState and prev reward
+				reward = self.get_reward()													#get reward for self.prevState and self.prevMove
+				self.update_qtable(reward)													#update qtable for self.prevState and prev reward
 				self.rewardSum += reward	
-				self.turn = self.switchPlayer()
+				self.turn = self.switch_player()
 				self.current_player = self.player1 if self.turn == 'X' else self.player2
 			else:																			#Meaning the game is over
-				reward = self.getReward()													#get reward for self.prevState and self.prevMove
-				self.updateQTable(reward)													#update qtable for self.prevState and prev reward
+				reward = self.get_reward()													#get reward for self.prevState and self.prevMove
+				self.update_qtable(reward)													#update qtable for self.prevState and prev reward
 				self.rewardSum += reward													
 				self.count_winner()
 				self.cumuWins.append(self.xwin_count)
@@ -126,33 +126,33 @@ class tictactoe_game():
 				self.state[int(pos)] = self.turn
 				self.valid.remove(pos)
 				self.isWinner = self.check_winner(self.state)
-			state = self.listToString(self.state)											#convert list to string for qtable dictionary manipulation
+			state = self.list_to_string(self.state)											#convert list to string for qtable dictionary manipulation
 			if state not in self.qtable.keys():
-				self.addKey(state) 															#add the current state as a string in the qtable as new key					
+				self.add_key(state) 															#add the current state as a string in the qtable as new key					
 		elif self.current_player == 'QLAgent':
-			state = self.listToString(self.state) 											#convert list to string for qtable dictionary manipulation
+			state = self.list_to_string(self.state) 											#convert list to string for qtable dictionary manipulation
 			if state not in self.qtable.keys():
-				self.addKey(state) 															#add the current state as a string in the qtable as new key
-			action = self.chooseAction(state) 												#choose an action based on the specific policy design
+				self.add_key(state) 															#add the current state as a string in the qtable as new key
+			action = self.choose_action(state) 												#choose an action based on the specific policy design
 			self.prevMove = int(action)
 			self.prevState = self.state[:]
 			self.state[int(action)] = self.turn 											#place the symbol on current action position
 			self.valid.remove(action)
-			nextState = self.listToString(self.state)
+			nextState = self.list_to_string(self.state)
 			if nextState not in self.qtable.keys():
-				self.addKey(nextState)
+				self.add_key(nextState)
 			self.isWinner = self.check_winner(self.state)	
 		elif self.current_player == 'Random':
 			pos = random.choice(self.valid)
 			self.state[int(pos)] = self.turn
 			self.valid.remove(pos)			
-			state = self.listToString(self.state)
+			state = self.list_to_string(self.state)
 			if state not in self.qtable.keys():
-				self.addKey(state) 															#add the current state as a string in the qtable as new key
+				self.add_key(state) 															#add the current state as a string in the qtable as new key
 			self.isWinner = self.check_winner(self.state)
 
 	
-	def switchPlayer(self):
+	def switch_player(self):
 		"""
 		Switches the current player control and returns the player's symbol
 		"""
@@ -160,7 +160,7 @@ class tictactoe_game():
 		return 'X' if self.turn == 'O' else 'O'
 
 
-	def getReward(self):
+	def get_reward(self):
 		"""
 		Returns reward based on the policy
 		"""
@@ -172,7 +172,7 @@ class tictactoe_game():
 			return 0
 
 
-	def listToString(self, list):
+	def list_to_string(self, list):
 		"""
 		Returns string converted from the provided list
 		"""
@@ -204,7 +204,7 @@ class tictactoe_game():
 		"""
 		Returns the result of the game or None, if there's free space on the board to play and neither of the players won
 		"""
-		state = self.listToString(state)
+		state = self.list_to_string(state)
 		winner = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]
 		for line in winner:
 			strike = state[line[0]] + state[line[1]] + state[line[2]]
@@ -217,14 +217,14 @@ class tictactoe_game():
 		return None		
 
 
-	def addKey(self, state):
+	def add_key(self, state):
 		"""
 		Adds the key to the qtable
 		"""
 		self.qtable.update({state:{0:0.0, 1:0.0, 2:0.0, 3:0.0, 4:0.0, 5:0.0, 6:0.0, 7:0.0, 8:0.0}})
 
 
-	def chooseAction(self, state):
+	def choose_action(self, state):
 		"""
 		Policy for choosing an action
 		"""
@@ -244,14 +244,14 @@ class tictactoe_game():
 			return action	
 
 
-	def updateQTable(self,reward):
+	def update_qtable(self,reward):
 		"""
 		Qtable update policy
 		"""
 		discount = 0.01	
 		learningRate = 0.5 
-		state = self.listToString(self.state)
-		prevState = self.listToString(self.prevState)
+		state = self.list_to_string(self.state)
+		prevState = self.list_to_string(self.prevState)
 
 		if self.isWinner is not None:
 			expected = reward	
@@ -285,7 +285,7 @@ class tictactoe_game():
 		"""
 		print(self.current_player + '\'s turn playing : ' + self.turn )
 		time.sleep(2)
-		state = self.listToString(self.state)
+		state = self.list_to_string(self.state)
 		print('_______')
 		print('|'+state[0]+'|'+state[1]+'|'+state[2]+'|')
 		print('|'+state[3]+'|'+state[4]+'|'+state[5]+'|')
@@ -349,7 +349,7 @@ def main():
 	x=range(0,200000)
 	plt.plot(x, game.cumuWins)
 	plt.xlabel('Episodes')
-	plt.ylabel('Reward')		
+	plt.ylabel('Number of Wins')		
 	plt.show()
 
 	pickle_out = open("Qlearn_new.pickle","wb")
@@ -361,11 +361,11 @@ def print_qtable(qtable, indent=0):
 	"""
 	Print Qtable with state(Key) and values. Useful in debugging.
 	"""
-  	for key, value in qtable.items():
-  		print(key)
-  		print(value)
+	for key, value in qtable.items():
+		print(key)
+		print(value)
 
 if __name__ == "__main__":
-    main()
+	main()
 
 		
