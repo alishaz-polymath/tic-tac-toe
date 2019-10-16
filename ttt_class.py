@@ -24,7 +24,7 @@ import pickle
 
 __author__ = "Syed Ali Shahbaz"
 __copyright__ = "Copyright 2019, TicTacToe with AI"
-__credits__ = ["Abhijit Anil"]
+__credits__ = ["Abhijit Nair"]
 __license__ = "MIT"
 __version__ = "1.0.1"
 __maintainer__ = "Syed Ali Shahbaz"
