@@ -28,7 +28,7 @@ __credits__ = ["Abhijit Nair"]
 __license__ = "MIT"
 __version__ = "1.0.1"
 __maintainer__ = "Syed Ali Shahbaz"
-__email__ = "alishahbaz7@gmail.com"
+__email__ = "contact@alishaz.com"
 __status__ = "Production"
 
 
