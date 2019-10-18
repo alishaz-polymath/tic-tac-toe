@@ -26,10 +26,14 @@ $ git clone https://github.com/alishaz-polymath/tic-tac-toe.git
 * pygame
 
 ## Example Performance Measure Graphs:
-![alt text](path/to/img "IMG TITLE")
+![Plot of Logical Agent vs Random Agent](images/ttt_plot_lavsrandom.png "Logical vs Random Agent")
+
+![Plot of QL Agent vs Logical Agent](images/ttt_plot_performance.png "QL vs Logical Agent")
+
+![Plot of QL Agent vs Random Agent](images/ttt_plot_qlvsrandom.png "QL vs Random Agent")
 
 ## Example Game Board:
-![alt text](path/to/img "IMG TITLE")
+![GUI Board](images/ttt_gui.png "GUI Board of TicTacToe")
 
 
 
