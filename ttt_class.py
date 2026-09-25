@@ -11,12 +11,8 @@ Note that the human player playing logic is not yet defined in the program, and 
 at a later stage such that we can then make the agent learn by playing against  a human  player  as 
 well.
 """
-import numpy as np
-import copy
-import math
+from game_rules import winner, tactical_move, legal_moves
 import random
-import operator
-import itertools
 import time as time
 from matplotlib import pyplot as plt
 import pickle
@@ -40,9 +36,11 @@ class tictactoe_game():
 		"""
 		Constructor for tic-tac-toe game initialization
 		"""
+		if player1 != 'QLAgent' or player2 not in ('LogicAgent', 'Random'):
+			raise ValueError("Training requires QLAgent as X and LogicAgent or Random as O")
 		self.learning = True
 		self.qtable = qtable	
-		self.exploration = 0.2
+		self.exploration = 0.8
 		self.episodes = 0
 		print('The Learning Begins')
 		self.state = ['0','1','2','3','4','5','6','7','8'] 									#initialize current state as empty board
@@ -84,26 +82,24 @@ class tictactoe_game():
 
 
 	def play_game(self):
-		"""
-		This is the game loop for every single episode
-		"""
+		"""Update each agent action once, after the opponent's reply."""
 		while self.iter < self.episodes:
-			#self.draw_board()																#Uncomment this line if you wish to visualize the text-based play on the console
-			self.play_move()																#play a move using current player
+			self.play_move()
 			if self.isWinner is None:
-				reward = self.get_reward()													#get reward for self.prevState and self.prevMove
-				self.update_qtable(reward)													#update qtable for self.prevState and prev reward
-				self.rewardSum += reward	
-				self.turn = self.switch_player()
-				self.current_player = self.player1 if self.turn == 'X' else self.player2
-			else:																			#Meaning the game is over
-				reward = self.get_reward()													#get reward for self.prevState and self.prevMove
-				self.update_qtable(reward)													#update qtable for self.prevState and prev reward
-				self.rewardSum += reward													
+				self.turn = 'O'
+				self.current_player = self.player2
+				self.play_move()
+			reward = self.get_reward()
+			self.update_qtable(reward)
+			self.rewardSum += reward
+			if self.isWinner is not None:
 				self.count_winner()
 				self.cumuWins.append(self.xwin_count)
 				self.reset_game(self.player1, self.player2)
-				self.iter +=1	
+				self.iter += 1
+			else:
+				self.turn = 'X'
+				self.current_player = self.player1
 
 
 	def play_move(self):
@@ -183,38 +179,11 @@ class tictactoe_game():
 
 
 	def check_strike(self):
-		"""
-		Returns the next state's possibility of game winning move for either players along with the position
-		"""
-		gameState = self.state[:]
-		for pos in self.valid:
-			gameState[int(pos)] = self.turn
-			if self.check_winner(gameState) == self.turn:
-				return True, pos
-			gameState = self.state[:]	
-			opponent = 'O' if self.turn == 'X' else 'X'		
-			gameState[int(pos)] = opponent
-			if self.check_winner(gameState) == opponent:
-				return True, pos		
-			gameState = self.state[:]		
-		return False, '0'	
+		return tactical_move(self.state, self.turn)
 
 
 	def check_winner(self, state):
-		"""
-		Returns the result of the game or None, if there's free space on the board to play and neither of the players won
-		"""
-		state = self.list_to_string(state)
-		winner = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]
-		for line in winner:
-			strike = state[line[0]] + state[line[1]] + state[line[2]]
-			if strike == 'XXX':
-				return 'X'
-			elif strike == 'OOO':
-				return 'O'	
-			elif len(self.valid)<1:
-				return 'Draw'
-		return None		
+		return winner(state)
 
 
 	def add_key(self, state):
@@ -225,46 +194,28 @@ class tictactoe_game():
 
 
 	def choose_action(self, state):
-		"""
-		Policy for choosing an action
-		"""
-		player = self.turn
-		if self.iter == 100000:
-			self.exploration = 1.01
-		num = random.uniform(0,1)
-		if num < self.exploration:
-			listOfQValues = []
-			for pos, val in self.qtable[state].items():
-				if str(pos) in self.valid:
-					listOfQValues.append( tuple((pos, val)) ) 
-			action = max(listOfQValues,key=operator.itemgetter(1))[0]
-			return str(action) if str(action) in self.valid else random.choice(self.valid)
-		else:
-			action = random.choice(self.valid)
-			return action	
+		"""Epsilon-greedy policy; exploration is the random-move probability."""
+		if self.iter >= 100000:
+			self.exploration = 0.0
+		if random.random() < self.exploration:
+			return random.choice(self.valid)
+		best = max(self.qtable[state][int(move)] for move in self.valid)
+		return random.choice([move for move in self.valid
+			if self.qtable[state][int(move)] == best])
 
 
-	def update_qtable(self,reward):
-		"""
-		Qtable update policy
-		"""
-		discount = 0.01	
-		learningRate = 0.5 
+	def update_qtable(self, reward):
+		"""Bootstrap from legal Q-values at the next agent decision state."""
+		discount = 0.01
+		learningRate = 0.5
 		state = self.list_to_string(self.state)
 		prevState = self.list_to_string(self.prevState)
-
-		if self.isWinner is not None:
-			expected = reward	
-		else:
-			expected = reward + (discount * max(self.qtable[state].items(), key=operator.itemgetter(1))[0])
-		try:	
-			change = learningRate * (expected - self.qtable[prevState][self.prevMove])
-		except:
-			print('error in : ' + prevState)	
-			print('action : ' + str(self.prevMove))
-			print('Turn : ' + self.turn)	
-			print(self.qtable)
-		self.qtable[prevState][self.prevMove] += change	
+		expected = reward
+		if self.isWinner is None:
+			expected += discount * max(
+				self.qtable[state][int(move)] for move in legal_moves(self.state))
+		old = self.qtable[prevState][self.prevMove]
+		self.qtable[prevState][self.prevMove] = old + learningRate * (expected - old)
 
 
 	def count_winner(self):
@@ -346,7 +297,7 @@ def main():
 	print (player2 + ' as O wins:' + str(game.ywin_count))
 	print ('Draws:' + str(game.draw_count))
 	print ('Qtable entries : ' + str( len(game.qtable) ) )
-	x=range(0,200000)
+	x=range(episodes)
 	plt.plot(x, game.cumuWins)
 	plt.xlabel('Episodes')
 	plt.ylabel('Number of Wins')		
@@ -354,7 +305,7 @@ def main():
 
 	pickle_out = open("Qlearn_new.pickle","wb")
 	pickle.dump(game.qtable, pickle_out)
-	pickle_out.close
+	pickle_out.close()
 
 
 def print_qtable(qtable, indent=0):

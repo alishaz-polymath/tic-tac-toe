@@ -6,12 +6,9 @@ Pygame library. There are still instances where it is apparent that the AI can i
 hasn't faced many situations while learning. At the moment, the agent doesn't learn while playing 
 against the Human user, and it is a feature I intend to add further down the line.
 """
-import numpy as np
-import copy
-import math
+from game_rules import winner, tactical_move, board_position
 import random
 import operator
-import itertools
 import time as time
 import pickle
 import pygame, sys
@@ -254,7 +251,10 @@ class tictactoe_game():
 		Returns the position on the board where the user clicked
 		"""
 		(mouseX, mouseY) = loc
-		pos, row, col = self.board_pos(mouseX, mouseY)
+		cell = self.board_pos(mouseX, mouseY)
+		if cell is None:
+			return None
+		pos, row, col = cell
 		if (self.state[int(pos)] == "X") or (self.state[int(pos)] == "O"):
 			return None
 		self.draw_move(pos,row,col)
@@ -278,43 +278,7 @@ class tictactoe_game():
 
 
 	def board_pos(self, mouseX, mouseY):
-		"""
-		Returns board position, row and column of the clicked location
-		"""
-		if (mouseY < 100):
-			row = 0
-		elif (mouseY < 200):
-			row = 1
-		else:
-			row = 2
-
-		if (mouseX < 100):
-			col = 0
-		elif (mouseX < 200):
-			col = 1
-		else:
-			col = 2
-
-		if (row==0) and (col==0):
-			pos = '0'	    
-		elif (row==0) and (col==1):
-			pos = '1'	    
-		elif (row==0) and (col==2):
-			pos = '2'	    
-		elif (row==1) and (col==0):
-			pos = '3'	    
-		elif (row==1) and (col==1):
-			pos = '4'	    
-		elif (row==1) and (col==2):
-			pos = '5'	    
-		elif (row==2) and (col==0):
-			pos = '6'	    
-		elif (row==2) and (col==1):
-			pos = '7'	    
-		else:
-			pos = '8'    
-
-		return pos, row, col
+		return board_position(mouseX, mouseY)
 
 
 	def list_to_string(self, list):
@@ -328,39 +292,11 @@ class tictactoe_game():
 
 
 	def check_strike(self):
-		"""
-		Returns the next state's possibility of game winning move for either players along with the position
-		"""
-		gameState = self.state[:]
-		for pos in self.valid:
-			gameState[int(pos)] = self.turn
-			if self.check_winner(gameState) == self.turn:
-				return True, pos
-					
-			gameState = self.state[:]	
-			opponent = 'O' if self.turn == 'X' else 'X'		
-			gameState[int(pos)] = opponent
-			if self.check_winner(gameState) == opponent:
-				return True, pos		
-			gameState = self.state[:]		
-		return False, '0'	
+		return tactical_move(self.state, self.turn)
 
 
 	def check_winner(self, state):
-		"""
-		Returns the result of the game or None, if there's free space on the board to play and neither of the players won
-		"""
-		state = self.list_to_string(state)
-		winner = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]
-		for line in winner:
-			strike = state[line[0]] + state[line[1]] + state[line[2]]
-			if strike == 'XXX':
-				return 'X'
-			elif strike == 'OOO':
-				return 'O'	
-			elif len(self.valid)<1:
-				return 'Draw'
-		return None		
+		return winner(state)
 
 
 	def choose_action(self, state):
