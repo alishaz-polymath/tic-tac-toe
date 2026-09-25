@@ -6,12 +6,9 @@ We notice that the QL Agent performs exceptionally against the Logical agent bec
 playing against the Logical Agent. However, the Logical agent outperforms the QL Agent against  a
 random agent.
 """
-import numpy as np
-import copy
-import math
+from game_rules import winner, tactical_move
 import random
 import operator
-import itertools
 import time as time
 from matplotlib import pyplot as plt
 import pickle
@@ -143,39 +140,11 @@ class tictactoe_game():
 
 
 	def check_strike(self):
-		"""
-		Returns the next state's possibility of game winning move for either players along with the position
-		"""
-		gameState = self.state[:]
-		for pos in self.valid:
-			gameState[int(pos)] = self.turn
-			if self.check_winner(gameState) == self.turn:
-				return True, pos
-					
-			gameState = self.state[:]	
-			opponent = 'O' if self.turn == 'X' else 'X'		
-			gameState[int(pos)] = opponent
-			if self.check_winner(gameState) == opponent:
-				return True, pos		
-			gameState = self.state[:]		
-		return False, '0'	
+		return tactical_move(self.state, self.turn)
 
 
 	def check_winner(self, state):
-		"""
-		Returns the result of the game or None, if there's free space on the board to play and neither of the players won
-		"""
-		state = self.list_to_string(state)
-		winner = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]
-		for line in winner:
-			strike = state[line[0]] + state[line[1]] + state[line[2]]
-			if strike == 'XXX':
-				return 'X'
-			elif strike == 'OOO':
-				return 'O'	
-			elif len(self.valid)<1:
-				return 'Draw'
-		return None		
+		return winner(state)
 
 
 	def choose_action(self, state):

@@ -39,3 +39,31 @@ $ git clone https://github.com/alishaz-polymath/tic-tac-toe.git
 
 ## License:
 This project is licensed under the MIT License.
+
+## Correctness and tests
+
+The training agent plays X against `LogicAgent` or `Random` as O. Each update
+covers one X move and, unless X ends the game, the opponent's response. Terminal
+rewards are +1 for an X win, -1 for an O win, and 0 for a draw. Nonterminal
+updates bootstrap from the maximum **legal action value** at X's next decision
+state, with learning rate 0.5 and discount 0.01.
+
+`exploration` is the probability of a random move: 0.8 initially, then 0 after
+100,000 episodes. Greedy training ties are broken randomly. This is a finite
+training schedule, not a guarantee of optimal play.
+
+The bundled `Qlearn_new.pickle` and example plots predate these correctness
+fixes. Regenerate the table from scratch with `python ttt_class.py` before
+assessing the corrected agent, then rerun `python ttt_performance_measure.py`.
+The existing plots should not be interpreted as corrected benchmark results.
+
+Install the plotting dependency and run the regression suite from the repository
+root (the GUI additionally requires `pygame`):
+
+```sh
+python -m pip install matplotlib
+python -m unittest discover -s tests -v
+```
+
+The tests cover all 5,478 legally reachable board states, tactical win priority,
+legal Q-value targets, terminal rewards, and agent/opponent transition timing.
